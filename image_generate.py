@@ -9,7 +9,7 @@ APP_URL="https://api.deepai.org/api/text2img"
 @app.route('/text-to-image', methods=['POST'])
 def generate_image():
     try:
-        #get prompt from the reques
+        #get prompt from the request
         prompt=request.get('prompt')
         if not prompt:
             return jsonify({"error": "Prompt is required"}), 400

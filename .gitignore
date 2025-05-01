@@ -5,3 +5,6 @@ test4.py
 TestModels
 myenv
 groq_image_prompt_chat_api.postman_collection.json
+# Ignore Python cache files
+__pycache__/
+*.pyc

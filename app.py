@@ -4,7 +4,7 @@ from utiles.globalllm import GroqLLM
 from flask import Flask, request, jsonify
 import os
 from werkzeug.utils import secure_filename
-from utiles.utils import build_system_prompt, ImageProcessing
+from utiles.utils import build_system_prompt, ImageProcessing,get_image
 
 API_KEY = "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"
 client = Groq(api_key=API_KEY)
@@ -12,6 +12,29 @@ client = Groq(api_key=API_KEY)
 groq_llm = GroqLLM(model="llama-3.1-8b-instant", api_key=API_KEY,temperature=0.4)
 
 app = Flask(__name__)
+
+
+@app.route('/text-to-image', methods=['POST'])
+def generate_image_endpoint():
+    try:
+        # Get the prompt from the JSON request body
+        data = request.get_json()  # Proper way to get JSON body
+        prompt = data.get('prompt')  # Access the prompt from the JSON object
+
+        if not prompt:
+            return jsonify({"error": "Prompt is required"}), 400
+
+        # Generate the image URL
+        image_url = get_image(f"generate a hyperrealistic image of{prompt}")  # Call your get_image function
+
+        if not image_url:
+            return jsonify({"error": "Image generation failed"}), 500
+
+        return jsonify({"image_url": image_url}), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 
 @app.route("/analyze_image_prompt", methods=["POST"])
 def analyze_image():
