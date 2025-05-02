@@ -13,7 +13,7 @@ from flask_cors import cross_origin
 API_KEY = "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"
 client = Groq(api_key=API_KEY)
 
-groq_llm = GroqLLM(model="llama-3.1-8b-instant", api_key=API_KEY,temperature=0.4)
+groq_llm = GroqLLM(model="llama-3.3-70b-versatile", api_key=API_KEY,temperature=0.8)#llama-3.1-8b-instan
 
 app = Flask(__name__)
 
@@ -134,6 +134,7 @@ def analyze_image():
     tone = request.form.get("tone", "neutral")
     way_of_talking = request.form.get("way_of_talking", "normal")
     nature_type = request.form.get("nature_type", "undisclosed")
+    language=request.form.get("prefered_language","english")
 
     try:
         # Analyze the image
@@ -141,7 +142,7 @@ def analyze_image():
 
         # Build system prompt
         system_prompt = build_system_prompt(
-            name, age, relationship_status, tone, way_of_talking, nature_type, physical_description
+            name, language,age, relationship_status, tone, way_of_talking, nature_type, physical_description
         )
 
         return jsonify({
