@@ -3,8 +3,12 @@ from groq import Groq
 from utiles.globalllm import GroqLLM
 from flask import Flask, request, jsonify
 import os
+import tempfile
+import requests
 from werkzeug.utils import secure_filename
 from utiles.utils import build_system_prompt, ImageProcessing,get_image
+from flask_cors import CORS
+from flask_cors import cross_origin
 
 API_KEY = "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"
 client = Groq(api_key=API_KEY)
@@ -13,8 +17,10 @@ groq_llm = GroqLLM(model="llama-3.1-8b-instant", api_key=API_KEY,temperature=0.4
 
 app = Flask(__name__)
 
+CORS(app, resources={r"/*": {"origins": "*"}})
 
 @app.route('/text-to-image', methods=['POST'])
+@cross_origin()
 def generate_image_endpoint():
     try:
         # Get the prompt from the JSON request body
@@ -36,14 +42,90 @@ def generate_image_endpoint():
         return jsonify({"error": str(e)}), 500
 
 
-@app.route("/analyze_image_prompt", methods=["POST"])
-def analyze_image():
-    if "image" not in request.files:
-        return jsonify({"error": "No image file uploaded"}), 400
+# @app.route("/analyze_image_prompt", methods=["POST"])
+# @cross_origin()
+# def analyze_image():
+#     if "image" not in request.files:
+#         return jsonify({"error": "No image file uploaded"}), 400
 
-    image_file = request.files["image"]
-    if image_file.filename == "":
-        return jsonify({"error": "Empty filename"}), 400
+#     image_file = request.files["image"]
+#     if image_file.filename == "":
+#         return jsonify({"error": "Empty filename"}), 400
+
+#     # Extract user-provided form data
+#     name = request.form.get("name", "Unknown")
+#     age = request.form.get("age", "Unknown")
+#     relationship_status = request.form.get("relationship_status", "friend")
+#     tone = request.form.get("tone", "neutral")
+#     way_of_talking = request.form.get("way_of_talking", "normal")
+#     nature_type = request.form.get("nature_type", "undisclosed")
+
+#     # Save the uploaded image
+#     filename = secure_filename(image_file.filename)
+#     file_path = os.path.join("uploads", filename)
+#     os.makedirs("uploads", exist_ok=True)
+#     image_file.save(file_path)
+
+#     try:
+#         # Get a description of the person from the image
+#         physical_description = ImageProcessing(file_path)
+
+#         # Build the system prompt
+#         system_prompt = build_system_prompt(
+#             name, age, relationship_status, tone, way_of_talking, nature_type, physical_description
+#         )
+
+#         return jsonify({
+#             "system_prompt": system_prompt,
+#             "image_analysis": physical_description
+#         })
+
+#     except Exception as e:
+#         return jsonify({"error": str(e)}), 500
+#     finally:
+#         if os.path.exists(file_path):
+#             os.remove(file_path)
+
+@app.route("/analyze_image_prompt", methods=["POST"])
+@cross_origin()
+def analyze_image():
+    image_file = request.files.get("image")
+    image_url = request.form.get("image_url")
+    temp_file_path = None
+
+    # Reject if both image and image_url are provided
+    if image_file and image_url:
+        return jsonify({"error": "Provide either an image file or an image URL, not both"}), 400
+
+    # Reject if neither provided
+    if not image_file and not image_url:
+        return jsonify({"error": "No image file or image URL provided"}), 400
+
+    # Handle uploaded file
+    if image_file and image_file.filename != "":
+        filename = secure_filename(image_file.filename)
+        file_path = os.path.join("uploads", filename)
+        os.makedirs("uploads", exist_ok=True)
+        image_file.save(file_path)
+
+    # Handle image URL
+    elif image_url:
+        try:
+            response = requests.get(image_url, stream=True)
+            if response.status_code != 200:
+                return jsonify({"error": "Failed to download image from URL"}), 400
+
+            temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".jpg")
+            for chunk in response.iter_content(1024):
+                temp_file.write(chunk)
+            temp_file.close()
+            file_path = temp_file.name
+            temp_file_path = file_path  # Mark for deletion
+        except Exception as e:
+            return jsonify({"error": f"Error downloading image: {str(e)}"}), 400
+
+    else:
+        return jsonify({"error": "Invalid image input"}), 400
 
     # Extract user-provided form data
     name = request.form.get("name", "Unknown")
@@ -53,17 +135,11 @@ def analyze_image():
     way_of_talking = request.form.get("way_of_talking", "normal")
     nature_type = request.form.get("nature_type", "undisclosed")
 
-    # Save the uploaded image
-    filename = secure_filename(image_file.filename)
-    file_path = os.path.join("uploads", filename)
-    os.makedirs("uploads", exist_ok=True)
-    image_file.save(file_path)
-
     try:
-        # Get a description of the person from the image
+        # Analyze the image
         physical_description = ImageProcessing(file_path)
 
-        # Build the system prompt
+        # Build system prompt
         system_prompt = build_system_prompt(
             name, age, relationship_status, tone, way_of_talking, nature_type, physical_description
         )
@@ -76,11 +152,15 @@ def analyze_image():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
     finally:
-        if os.path.exists(file_path):
+        # Clean up temp files
+        if temp_file_path and os.path.exists(temp_file_path):
+            os.remove(temp_file_path)
+        elif image_file and os.path.exists(file_path):
             os.remove(file_path)
 
 
 @app.route("/chat", methods=["POST"])
+@cross_origin()
 def chat():
     data = request.get_json()
     
