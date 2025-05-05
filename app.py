@@ -25,13 +25,38 @@ def generate_image_endpoint():
     try:
         # Get the prompt from the JSON request body
         data = request.get_json()  # Proper way to get JSON body
-        prompt = data.get('prompt')  # Access the prompt from the JSON object
+        # prompt = data.get('prompt')  # Access the prompt from the JSON object
+        body_shape=data.get("body_shape")
+        breast_size=data.get("breast_size")
+        butt_size=data.get("butt_size")
+        skin_color=data.get("skin_color")
+        eye_color=data.get("eye_color")
+        hair_color=data.get("hair_color")
+        hair_style=data.get("hair_style")
+        gender=data.get("gender")
+        age=data.get("age")
+        nationality = data.get("nationality")  # Add this line
 
-        if not prompt:
+
+        if not body_shape and not breast_size and not butt_size and not skin_color and not eye_color and not hair_color and not hair_style and not gender:
             return jsonify({"error": "Prompt is required"}), 400
 
         # Generate the image URL
-        image_url = get_image(f"generate a hyperrealistic image of{prompt}")  # Call your get_image function
+        image_url = get_image(f"""Generate a hyperrealistic image of a {gender} and age {age} from {nationality} with the following physical features:
+
+        Body shape: {body_shape}
+
+        Butt size: {butt_size}
+
+        Skin color: {skin_color}
+
+        Eye color: {eye_color}
+
+        Hair color: {hair_color}
+
+        Hairstyle: {hair_style}
+"""
+)  # Call your get_image function
 
         if not image_url:
             return jsonify({"error": "Image generation failed"}), 500
@@ -135,6 +160,12 @@ def analyze_image():
     way_of_talking = request.form.get("way_of_talking", "normal")
     nature_type = request.form.get("nature_type", "undisclosed")
     language=request.form.get("prefered_language","english")
+    gender=request.form.get("gender","female")
+    personality1=request.form.get("personality1","cute")
+    personality2=request.form.get("personality2","naughty")
+    personality3=request.form.get("personality3","bold")
+
+
 
     try:
         # Analyze the image
@@ -142,7 +173,7 @@ def analyze_image():
 
         # Build system prompt
         system_prompt = build_system_prompt(
-            name, language,age, relationship_status, tone, way_of_talking, nature_type, physical_description
+           name, age, gender ,language,relationship_status, tone, way_of_talking, nature_type, physical_description,personality1,personality2,personality3
         )
 
         return jsonify({

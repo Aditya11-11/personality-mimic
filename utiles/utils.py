@@ -1,5 +1,5 @@
 import base64
-from groq import Groq
+from groq import Groq ,GroqError
 import os
 
 
@@ -9,9 +9,9 @@ def encode_image(image_path):
   with open(image_path, "rb") as image_file:
     return base64.b64encode(image_file.read()).decode('utf-8')
 
-def build_system_prompt(name,language, age, relationship_status, tone, way_of_talking, nature_type, physical_description):
+def build_system_prompt(name, age, gender ,language,relationship_status, tone, way_of_talking, nature_type, physical_description,personality1,personality2,personality3):
     return f"""
-    Your name is {name}. You are {age} years old.
+    Your name is {name}. You are {age} years old and your gender is {gender}.
 
     Emoji & Conversational Guidelines:
     - Speak like a real person — {tone}, {nature_type}, {way_of_talking}.
@@ -40,6 +40,7 @@ def build_system_prompt(name,language, age, relationship_status, tone, way_of_ta
     - Your tone when speaking: {tone}
     - Way of talking: {way_of_talking}
     - Nature: {nature_type}
+    - Personality: {personality1},{personality2},{personality3}
 
     You are to behave and talk like someone with this personality and background. Always speak to me like a real {relationship_status} would — using a {tone} tone, a {way_of_talking} style of speaking, and showing your {nature_type} nature.
 
@@ -52,38 +53,44 @@ def build_system_prompt(name,language, age, relationship_status, tone, way_of_ta
 # Path to your image
 def ImageProcessing(imagepath):
     # Getting the base64 string
-    base64_image = encode_image(image_path=imagepath)
+    try:
+        base64_image = encode_image(image_path=imagepath)
 
-    client = Groq(api_key="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")
+        client = Groq(api_key="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")
 
-    chat_completion = client.chat.completions.create(
-        messages=[
-            {
-                "role": "system",
-                "content": """Analyze this image, detect and describe any visible human subjects by analyzing their facial features, skin tone, expression, age group, and any identifying traits to generate a brief personality or demographic profile"""            
-            },
-
-            
-            
-            {
-                "role": "user",
-                "content": [
+        chat_completion = client.chat.completions.create(
+            messages=[
                 {
-                    "type": "text",
-                    "text": "A brief profile about the person visible in the image"
+                    "role": "system",
+                    "content": """Analyze this image, detect and describe any visible human subjects by analyzing their facial features, skin tone, expression, age group, and any identifying traits to generate a brief personality or demographic profile"""            
                 },
+
+                
+                
                 {
-                    "type": "image_url",
-                    "image_url": {
-                    "url": f"data:image/jpeg;base64,{base64_image}"
+                    "role": "user",
+                    "content": [
+                    {
+                        "type": "text",
+                        "text": "A brief profile about the person visible in the image"
+                    },
+                    {
+                        "type": "image_url",
+                        "image_url": {
+                        "url": f"data:image/jpeg;base64,{base64_image}"
+                        }
                     }
+                    ]
                 }
-                ]
-            }
-            ],
-        model="meta-llama/llama-4-scout-17b-16e-instruct",
-    )
-    return chat_completion.choices[0].message.content
+                ],
+            model="meta-llama/llama-4-scout-17b-16e-instruct",
+        )
+        return chat_completion.choices[0].message.content
+    
+    except GroqError as e:
+        return f"GROQ API error: {str(e)}"
+    except Exception as e:
+        return f"Unexpected error: {str(e)}"
 
 
 
