@@ -102,6 +102,7 @@ def ImageProcessing(imagepath):
 
 
 def get_image(prompt:str):
+    # print(f"here--->{prompt}")
 
     req = requests.post(
         "https://api.deepai.org/api/text2img",
@@ -111,6 +112,9 @@ def get_image(prompt:str):
         headers={'api-key': api_key_img}
     )
     requested_data=req.json()
+    
+    # print(api_key_img)
+    # print(requested_data)
     output_url = requested_data.get('output_url')
     # share_url = requested_data.get('share_url')
 
