@@ -25,8 +25,10 @@ app = Flask(__name__)
 
 #DBCONFIGER
 # Local MySQL Database Configuration (fallback to SQLite for development)
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///test.db')
+# app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:@localhost/image_generation'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:dtyxtGrcajPlvDLILFCfgVdWFwwCvTdD@metro.proxy.rlwy.net:41157/railway'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
+
 # Set a secret key for JWT (change this in production)
 app.config['JWT_SECRET_KEY'] = 'super-secret-key'
 app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(days=1)
