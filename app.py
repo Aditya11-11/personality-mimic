@@ -433,11 +433,16 @@ def chat():
     if not image_data:
         return jsonify({"error": "Image ID not found"}), 404
 
-    system_prompt = image_data.prompt
+    s_prompt = image_data.prompt
+
+    if s_prompt is not None:
+        system_prompt=s_prompt.strip()
+    else:
+        system_prompt=s_prompt
 
     # Construct chat prompt
     prompt = ChatPromptTemplate.from_messages([
-        ("system", system_prompt.strip()),
+        ("system", system_prompt),
         ("human", human_msg.strip())
     ])
 

@@ -9,7 +9,7 @@ import time
 
 load_dotenv()  # Loads environment variables from .env
 
-api_key_groq = os.getenv("MY_API_KEY")
+API_KEY = os.getenv("MY_API_KEY")
 api_key_img= os.getenv("MY_IMG_API")
 
 
@@ -66,7 +66,7 @@ def ImageProcessing(imagepath):
     try:
         base64_image = encode_image(image_path=imagepath)
 
-        client = Groq(api_key=api_key_groq)
+        client = Groq(api_key=API_KEY)
 
         chat_completion = client.chat.completions.create(
             messages=[
