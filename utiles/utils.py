@@ -115,7 +115,7 @@ def get_image(prompt: str, max_retries: int = 5, wait_seconds: int = 3):
             response.raise_for_status()  # Raise if HTTP error
 
             data = response.json()
-            output_url = data.get('output_url')
+            output_url = data.get('share_url')
 
             if output_url:
                 return output_url
