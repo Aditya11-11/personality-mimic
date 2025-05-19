@@ -331,7 +331,7 @@ def generate_image_endpoint():
         if not user_id:
             return jsonify({"error": "User ID is required"}), 400
 
-        if not any([body_shape, breast_size, butt_size, skin_color, eye_color, hair_color, hair_style, gender]):
+        if not any([body_shape, breast_size, butt_size, skin_color, eye_color, hair_color, hair_style, gender, age]):
             return jsonify({"error": "At least one descriptive field is required"}), 400
 
         # Construct the prompt
@@ -432,6 +432,9 @@ def analyze_image():
     personality2=request.form.get("personality2","naughty")
     personality3=request.form.get("personality3","bold")
 
+    if not name or not age:
+        return jsonify({"error": "Name and age are required"}), 400
+
     try:
         # Analyze the image
         physical_description = ImageProcessing(file_path)
@@ -504,6 +507,34 @@ def get_images():
 
     return jsonify(result), 200
 
+@app.route('/image_data',methods=['DELETE'])
+@cross_origin(
+    origins="*",
+    allow_headers=["Content-Type", "Authorization", "Access-Control-Allow-Credentials"],
+    supports_credentials=True,
+    methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+)
+@jwt_required()
+def delete_image():
+    data = request.get_json()
+    image_id = data.get("image_id")
+
+    if not image_id:
+        return jsonify({"error": "Image ID is required"}), 400
+
+    try:
+        image_data = ImageData.query.filter_by(id=image_id).first()
+        if not image_data:
+            return jsonify({"error": "Image not found"}), 404
+
+        db.session.delete(image_data)
+        db.session.commit()
+
+        return jsonify({"message": "Image deleted successfully"}), 200
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
 
 # @app.route('/add_token', methods =['PUT'])
 # @cross_origin(
